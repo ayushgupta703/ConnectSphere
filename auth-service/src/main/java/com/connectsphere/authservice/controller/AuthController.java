@@ -1,9 +1,6 @@
 package com.connectsphere.authservice.controller;
 
-import com.connectsphere.authservice.dto.AuthResponse;
-import com.connectsphere.authservice.dto.LoginRequest;
-import com.connectsphere.authservice.dto.RegisterRequest;
-import com.connectsphere.authservice.dto.UserResponse;
+import com.connectsphere.authservice.dto.*;
 import com.connectsphere.authservice.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +25,17 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
+        authService.logout(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request));
     }
 
     @GetMapping("/me")
