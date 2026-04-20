@@ -1,14 +1,12 @@
 package com.connectsphere.authservice.service;
 
-import com.connectsphere.authservice.dto.AuthResponse;
-import com.connectsphere.authservice.dto.LoginRequest;
-import com.connectsphere.authservice.dto.RegisterRequest;
-import com.connectsphere.authservice.dto.UserResponse;
+import com.connectsphere.authservice.dto.*;
 import com.connectsphere.authservice.entity.*;
 import com.connectsphere.authservice.exception.ConflictException;
 import com.connectsphere.authservice.exception.ResourceNotFoundException;
 import com.connectsphere.authservice.repository.UserRepository;
 import com.connectsphere.authservice.security.JwtService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +22,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     // ========================= REGISTER =========================
     @Transactional
@@ -53,13 +52,14 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        String token = jwtService.generateToken(savedUser);
+        String accessToken = jwtService.generateToken(savedUser);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(savedUser);
 
         return new AuthResponse(
-                token,
+                accessToken,
                 "Bearer",
                 jwtService.getExpirationMs(),
-                null, // refreshToken (future)
+                refreshToken.getToken(),
                 toUserResponse(savedUser)
         );
     }
@@ -81,13 +81,43 @@ public class AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
-        String token = jwtService.generateToken(user);
+        String accessToken = jwtService.generateToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
         return new AuthResponse(
-                token,
+                accessToken,
                 "Bearer",
                 jwtService.getExpirationMs(),
-                null,
+                refreshToken.getToken(),
+                toUserResponse(user)
+        );
+    }
+
+    // ========================= LOGOUT =========================
+    @Transactional
+    public void logout(RefreshTokenRequest request) {
+
+        String requestToken = request.refreshToken();
+
+        // Validate token first
+        refreshTokenService.verifyToken(requestToken);
+
+        // Delete token
+        refreshTokenService.deleteByToken(requestToken);
+    }
+
+    // ========================= REFRESH TOKEN =========================
+    @Transactional
+    public AuthResponse refreshToken(@Valid RefreshTokenRequest request) {
+        String requestToken = request.refreshToken();
+        RefreshToken refreshToken = refreshTokenService.verifyToken(requestToken);
+        User user = refreshToken.getUser();
+        String accessToken = jwtService.generateToken(user);
+        return new AuthResponse(
+                accessToken,
+                "Bearer",
+                jwtService.getExpirationMs(),
+                requestToken,
                 toUserResponse(user)
         );
     }
@@ -120,4 +150,5 @@ public class AuthService {
     private String normalizeEmail(String email) {
         return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
+
 }
