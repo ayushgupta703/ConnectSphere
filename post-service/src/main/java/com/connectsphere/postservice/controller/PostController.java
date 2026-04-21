@@ -93,12 +93,12 @@ public class PostController {
                 PostVisibility.valueOf(visibility));
     }
 
-    @PatchMapping("/{postId}/like")
+    @PostMapping("/{postId}/like")
     public void like(@PathVariable UUID postId) {
         postService.incrementLikes(postId);
     }
 
-    @PatchMapping("/{postId}/unlike")
+    @PostMapping("/{postId}/unlike")
     public void unlike(@PathVariable UUID postId) {
         postService.decrementLikes(postId);
     }
