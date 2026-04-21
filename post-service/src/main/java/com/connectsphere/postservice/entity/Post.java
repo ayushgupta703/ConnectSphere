@@ -39,6 +39,9 @@ public class Post {
     private long commentsCount = 0;
 
     @Column(nullable = false)
+    private long sharesCount = 0;
+
+    @Column(nullable = false)
     private boolean isDeleted = false;
 
     @Column(nullable = false, updatable = false)
