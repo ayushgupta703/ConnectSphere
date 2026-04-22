@@ -1,5 +1,6 @@
 package com.connectsphere.postservice.service.impl;
 
+import com.connectsphere.postservice.client.FollowClient;
 import com.connectsphere.postservice.dto.request.CreatePostRequest;
 import com.connectsphere.postservice.dto.request.UpdatePostRequest;
 import com.connectsphere.postservice.dto.response.PostResponse;
@@ -14,15 +15,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
+    private final FollowClient followClient;
 
-    public PostServiceImpl(PostRepository postRepository) {
+    public PostServiceImpl(PostRepository postRepository, FollowClient followClient) {
         this.postRepository = postRepository;
+        this.followClient = followClient;
     }
 
     // 🔹 Create Post
@@ -116,12 +120,51 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public PostResponse getPostById(UUID postId) {
+    public PostResponse getPostById(UUID postId, UUID currentUserId, String token) {
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
         if (post.isDeleted()) {
             throw new ResourceNotFoundException("Post not found");
+        }
+
+        UUID ownerId = post.getUserId();
+
+        // PUBLIC → allow
+        if (post.getVisibility() == PostVisibility.PUBLIC) {
+            return mapToResponse(post);
+        }
+
+        // PRIVATE → only owner
+        if (post.getVisibility() == PostVisibility.PRIVATE) {
+            if (!ownerId.equals(currentUserId)) {
+                throw new UnauthorizedException("Not allowed");
+            }
+            return mapToResponse(post);
+        }
+
+        // FOLLOWERS_ONLY
+        if (post.getVisibility() == PostVisibility.FOLLOWERS_ONLY) {
+
+            // Owner always allowed
+            if (ownerId.equals(currentUserId)) {
+                return mapToResponse(post);
+            }
+
+            try {
+                Map<String, Boolean> response =
+                        followClient.isFollowing(ownerId, token);
+
+                boolean isFollowing = response.getOrDefault("following", false);
+
+                if (!isFollowing) {
+                    throw new UnauthorizedException("Not allowed");
+                }
+
+            } catch (Exception ex) {
+                throw new RuntimeException("Follow service unavailable");
+            }
         }
 
         return mapToResponse(post);
