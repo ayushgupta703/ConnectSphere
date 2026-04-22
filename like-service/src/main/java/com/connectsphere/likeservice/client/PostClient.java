@@ -13,4 +13,7 @@ public interface PostClient {
 
     @PostMapping("/api/v1/posts/{id}/unlike")
     void decrementLikes(@PathVariable("id") UUID postId);
+
+    @GetMapping("/api/v1/posts/{postId}/owner")
+    UUID getPostOwner(@PathVariable("id") UUID postId);
 }

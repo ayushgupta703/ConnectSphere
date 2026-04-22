@@ -1,5 +1,6 @@
 package com.connectsphere.followservice.service.impl;
 
+import com.connectsphere.followservice.client.NotificationClient;
 import com.connectsphere.followservice.dto.*;
 import com.connectsphere.followservice.entity.Follow;
 import com.connectsphere.followservice.exception.BadRequestException;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class FollowServiceImpl implements FollowService {
 
     private final FollowRepository repository;
+    private final NotificationClient notificationClient;
 
     @Override
     public FollowResponseDto followUser(UUID targetUserId) {
@@ -28,6 +30,14 @@ public class FollowServiceImpl implements FollowService {
             throw new BadRequestException("You cannot follow yourself");
         }
 
+        // ❗ OPTIONAL: prevent duplicate follow (recommended)
+        boolean alreadyFollowing = repository
+                .existsByFollowerIdAndFollowingId(currentUserId, targetUserId);
+
+        if (alreadyFollowing) {
+            throw new BadRequestException("Already following this user");
+        }
+
         Follow follow = Follow.builder()
                 .followerId(currentUserId)
                 .followingId(targetUserId)
@@ -35,6 +45,16 @@ public class FollowServiceImpl implements FollowService {
                 .build();
 
         Follow saved = repository.save(follow);
+
+        // 🔥 SEND NOTIFICATION
+        notificationClient.sendNotification(
+                com.connectsphere.followservice.dto.NotificationRequest.builder()
+                        .recipientId(targetUserId.toString())
+                        .actorId(currentUserId.toString())
+                        .type("FOLLOW")
+                        .targetId(targetUserId.toString())
+                        .build()
+        );
 
         return mapToDto(saved);
     }

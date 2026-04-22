@@ -1,6 +1,7 @@
 package com.connectsphere.commentservice.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -14,4 +15,7 @@ public interface PostClient {
 
     @PostMapping("/api/v1/posts/{postId}/uncomment")
     void decrementComments(@PathVariable("id") UUID postId);
+
+    @GetMapping("/api/v1/posts/{postId}/owner")
+    UUID getPostOwner(@PathVariable UUID postId);
 }

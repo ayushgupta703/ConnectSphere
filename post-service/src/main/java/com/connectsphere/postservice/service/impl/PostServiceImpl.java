@@ -243,4 +243,12 @@ public class PostServiceImpl implements PostService {
                 .findByUserIdInAndIsDeletedFalseOrderByCreatedAtDesc(userIds, pageable)
                 .map(this::mapToResponse);
     }
+
+    @Override
+    public String getPostOwner(UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        return post.getUserId().toString();
+    }
 }

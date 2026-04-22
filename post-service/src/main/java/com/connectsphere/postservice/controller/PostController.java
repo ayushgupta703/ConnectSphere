@@ -121,4 +121,9 @@ public class PostController {
     public long count(@PathVariable UUID userId) {
         return postService.getPostCount(userId);
     }
+
+    @GetMapping("/{postId}/owner")
+    public String getPostOwner(@PathVariable UUID postId) {
+        return postService.getPostOwner(postId);
+    }
 }
