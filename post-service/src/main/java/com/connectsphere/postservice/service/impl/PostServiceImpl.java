@@ -179,6 +179,17 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public void decrementComments(UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
+
+        if (post.getCommentsCount() > 0) {
+            post.setCommentsCount(post.getCommentsCount() - 1);
+        }
+        postRepository.save(post);
+    }
+
+    @Override
     public long getPostCount(UUID userId) {
         return postRepository.countByUserId(userId);
     }

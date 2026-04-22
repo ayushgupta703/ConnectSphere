@@ -103,9 +103,14 @@ public class PostController {
         postService.decrementLikes(postId);
     }
 
-    @PatchMapping("/{postId}/comment")
-    public void comment(@PathVariable UUID postId) {
+    @PostMapping("/{postId}/comment")
+    public void incrementComment(@PathVariable UUID postId) {
         postService.incrementComments(postId);
+    }
+
+    @PostMapping("/{postId}/uncomment")
+    public void decrementComment(@PathVariable UUID postId) {
+        postService.decrementComments(postId);
     }
 
     @GetMapping("/count/{userId}")

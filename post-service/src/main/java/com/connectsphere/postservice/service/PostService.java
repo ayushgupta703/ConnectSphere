@@ -34,6 +34,8 @@ public interface PostService {
 
     void incrementComments(UUID postId);
 
+    void decrementComments(UUID postId);
+
     long getPostCount(UUID userId);
 
     Page<PostResponse> getFeedForUser(List<UUID> userIds, Pageable pageable);
