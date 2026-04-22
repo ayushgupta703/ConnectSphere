@@ -18,7 +18,7 @@ public interface PostService {
 
     Page<PostResponse> getPostsByUser(UUID userId, Pageable pageable);
 
-    PostResponse getPostById(UUID postId);
+    PostResponse getPostById(UUID postId, UUID currentUserId, String token);
 
     PostResponse updatePost(UUID postId, UUID userId, UpdatePostRequest request);
 

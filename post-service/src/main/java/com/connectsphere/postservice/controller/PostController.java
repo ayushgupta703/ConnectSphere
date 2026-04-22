@@ -70,8 +70,12 @@ public class PostController {
     }
 
     @GetMapping("/{postId}")
-    public PostResponse getPostById(@PathVariable UUID postId) {
-        return postService.getPostById(postId);
+    public PostResponse getPostById(
+            @PathVariable UUID postId,
+            @RequestAttribute("userId") UUID userId,
+            @RequestHeader("Authorization") String token
+    ) {
+        return postService.getPostById(postId, userId, token);
     }
 
     @GetMapping("/search")
