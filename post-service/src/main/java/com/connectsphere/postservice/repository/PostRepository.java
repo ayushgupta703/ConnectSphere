@@ -22,4 +22,6 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     long countByUserId(UUID userId);
 
     Page<Post> findByUserIdInAndIsDeletedFalseOrderByCreatedAtDesc(List<UUID> userIds, Pageable pageable);
+
+    List<Post> findByAuthorIdInOrderByCreatedAtDesc(List<UUID> authorIds);
 }

@@ -1,6 +1,8 @@
 package com.connectsphere.likeservice.service.impl;
 
+import com.connectsphere.likeservice.client.NotificationClient;
 import com.connectsphere.likeservice.client.PostClient;
+import com.connectsphere.likeservice.dto.NotificationRequest;
 import com.connectsphere.likeservice.dto.ReactionRequest;
 import com.connectsphere.likeservice.dto.ReactionSummaryResponse;
 import com.connectsphere.likeservice.entity.Like;
@@ -21,6 +23,7 @@ public class LikeServiceImpl implements LikeService {
 
     private final LikeRepository likeRepository;
     private final PostClient postClient;
+    private final NotificationClient notificationClient;
 
     @Override
     public void react(ReactionRequest request, UUID userId) {
@@ -29,10 +32,11 @@ public class LikeServiceImpl implements LikeService {
                 likeRepository.findByUserIdAndPostId(userId, request.getPostId());
 
         if (existing.isPresent()) {
-            // 🔁 CHANGE REACTION
+            // 🔁 CHANGE REACTION (NO NOTIFICATION)
             Like like = existing.get();
             like.setReactionType(request.getReactionType());
             likeRepository.save(like);
+
         } else {
             // ❤️ NEW REACTION
             Like like = Like.builder()
@@ -46,6 +50,22 @@ public class LikeServiceImpl implements LikeService {
 
             // 🔗 CALL POST SERVICE
             postClient.incrementLikes(request.getPostId());
+
+            // 🔥 GET POST OWNER (IMPORTANT)
+            UUID postOwnerId = postClient.getPostOwner(request.getPostId());
+
+            // ❌ DON'T NOTIFY SELF
+            if (!postOwnerId.equals(userId.toString())) {
+
+                NotificationRequest notification = NotificationRequest.builder()
+                        .recipientId(postOwnerId.toString())
+                        .actorId(userId.toString())
+                        .type("LIKE")
+                        .targetId(request.getPostId().toString())
+                        .build();
+
+                notificationClient.sendNotification(notification);
+            }
         }
     }
 

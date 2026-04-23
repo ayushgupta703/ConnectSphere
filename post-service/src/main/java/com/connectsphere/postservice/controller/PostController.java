@@ -4,12 +4,15 @@ import com.connectsphere.postservice.dto.request.CreatePostRequest;
 import com.connectsphere.postservice.dto.request.UpdatePostRequest;
 import com.connectsphere.postservice.dto.response.PostResponse;
 import com.connectsphere.postservice.enums.PostVisibility;
+import com.connectsphere.postservice.security.JwtUtil;
 import com.connectsphere.postservice.service.PostService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -17,9 +20,11 @@ import java.util.UUID;
 public class PostController {
 
     private final PostService postService;
+    private final JwtUtil jwtUtil;
 
-    public PostController(PostService postService) {
+    public PostController(PostService postService, JwtUtil jwtUtil) {
         this.postService = postService;
+        this.jwtUtil = jwtUtil;
     }
 
     // 🔹 Create Post
@@ -120,5 +125,19 @@ public class PostController {
     @GetMapping("/count/{userId}")
     public long count(@PathVariable UUID userId) {
         return postService.getPostCount(userId);
+    }
+
+    @GetMapping("/{postId}/owner")
+    public String getPostOwner(@PathVariable UUID postId) {
+        return postService.getPostOwner(postId);
+    }
+
+    @GetMapping("/feed")
+    public ResponseEntity<List<PostResponse>> getFeed(
+            @RequestHeader("Authorization") String token) {
+
+        UUID userId = jwtUtil.extractUserId(token);
+
+        return ResponseEntity.ok(postService.getFeed(userId));
     }
 }

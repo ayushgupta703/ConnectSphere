@@ -1,5 +1,6 @@
 package com.connectsphere.commentservice.service;
 
+import com.connectsphere.commentservice.client.NotificationClient;
 import com.connectsphere.commentservice.client.PostClient;
 import com.connectsphere.commentservice.dto.CommentResponseDto;
 import com.connectsphere.commentservice.entity.Comment;
@@ -22,14 +23,17 @@ public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
     private final PostClient postClient;
+    private final NotificationClient notificationClient;
 
     // ✅ ADD COMMENT
     @Override
     @Transactional
     public CommentResponseDto addComment(UUID userId, UUID postId, String content, UUID parentCommentId) {
 
+        Comment parent = null;
+
         if (parentCommentId != null) {
-            Comment parent = commentRepository.findByIdAndDeletedFalse(parentCommentId)
+            parent = commentRepository.findByIdAndDeletedFalse(parentCommentId)
                     .orElseThrow(() -> new ResourceNotFoundException("Parent comment not found"));
 
             if (parent.getParentCommentId() != null) {
@@ -52,8 +56,47 @@ public class CommentServiceImpl implements CommentService {
 
         Comment saved = commentRepository.save(comment);
 
-        // 🔥 Feign call to Post Service
+        // 🔗 Feign call to Post Service
         postClient.incrementComments(postId);
+
+        // 🔥 NOTIFICATION LOGIC STARTS HERE
+
+        if (parentCommentId == null) {
+            // 📌 CASE 1: COMMENT ON POST
+
+            UUID postOwnerId = postClient.getPostOwner(postId);
+
+            if (!postOwnerId.equals(userId)) {
+
+                notificationClient.sendNotification(
+                        com.connectsphere.commentservice.dto.NotificationRequest.builder()
+                                .recipientId(postOwnerId.toString())
+                                .actorId(userId.toString())
+                                .type("COMMENT")
+                                .targetId(postId.toString())
+                                .build()
+                );
+            }
+
+        } else {
+            // 📌 CASE 2: REPLY TO COMMENT
+
+            UUID commentOwnerId = parent.getUserId();
+
+            if (!commentOwnerId.equals(userId)) {
+
+                notificationClient.sendNotification(
+                        com.connectsphere.commentservice.dto.NotificationRequest.builder()
+                                .recipientId(commentOwnerId.toString())
+                                .actorId(userId.toString())
+                                .type("REPLY")
+                                .targetId(parentCommentId.toString())
+                                .build()
+                );
+            }
+        }
+
+        // 🔥 NOTIFICATION LOGIC ENDS HERE
 
         return mapToResponse(saved);
     }

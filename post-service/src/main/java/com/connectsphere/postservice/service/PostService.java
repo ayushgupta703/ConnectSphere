@@ -39,4 +39,8 @@ public interface PostService {
     long getPostCount(UUID userId);
 
     Page<PostResponse> getFeedForUser(List<UUID> userIds, Pageable pageable);
+
+    String getPostOwner(UUID postId);
+
+    List<PostResponse> getFeed(UUID userId);
 }
