@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -14,4 +15,7 @@ public interface FollowClient {
     Map<String, Boolean> isFollowing(
             @PathVariable UUID userId,
             @RequestHeader("Authorization") String token);
+
+    @GetMapping("/api/v1/follows/following/{userId}")
+    List<UUID> getFollowing(@PathVariable UUID userId);
 }

@@ -251,4 +251,15 @@ public class PostServiceImpl implements PostService {
 
         return post.getUserId().toString();
     }
+
+    @Override
+    public List<PostResponse> getFeed(UUID userId) {
+        List<UUID> followingIds = followClient.getFollowing(userId);
+
+        followingIds.add(userId);
+
+        List<Post> posts = postRepository.findByAuthorIdInOrderByCreatedAtDesc(followingIds);
+
+        return posts.stream().map(this::mapToResponse).toList();
+    }
 }
