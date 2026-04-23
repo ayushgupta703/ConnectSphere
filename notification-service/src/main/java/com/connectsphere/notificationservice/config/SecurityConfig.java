@@ -30,7 +30,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/notifications/**").authenticated()
-                        .requestMatchers("/api/v1/notifications").authenticated()
+                        .requestMatchers("/api/v1/notifications").permitAll()
                         .anyRequest().permitAll()
                 )
 

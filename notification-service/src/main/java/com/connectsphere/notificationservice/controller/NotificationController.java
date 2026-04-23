@@ -2,7 +2,6 @@ package com.connectsphere.notificationservice.controller;
 
 import com.connectsphere.notificationservice.dto.NotificationRequest;
 import com.connectsphere.notificationservice.entity.Notification;
-import com.connectsphere.notificationservice.entity.NotificationType;
 import com.connectsphere.notificationservice.service.NotificationService;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
