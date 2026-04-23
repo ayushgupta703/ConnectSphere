@@ -75,12 +75,15 @@ public class PostController {
     }
 
     @GetMapping("/{postId}")
-    public PostResponse getPostById(
+    public ResponseEntity<PostResponse> getPostById(
             @PathVariable UUID postId,
-            @RequestAttribute("userId") UUID userId,
             @RequestHeader("Authorization") String token
     ) {
-        return postService.getPostById(postId, userId, token);
+        UUID userId = jwtUtil.extractUserId(token);
+
+        return ResponseEntity.ok(
+                postService.getPostById(postId, userId, token)
+        );
     }
 
     @GetMapping("/search")
@@ -139,5 +142,12 @@ public class PostController {
         UUID userId = jwtUtil.extractUserId(token);
 
         return ResponseEntity.ok(postService.getFeed(userId));
+    }
+
+    @PostMapping("/bulk")
+    public ResponseEntity<List<PostResponse>> getPostsByIds(
+            @RequestBody List<UUID> postIds
+    ) {
+        return ResponseEntity.ok(postService.getPostsByIds(postIds));
     }
 }
