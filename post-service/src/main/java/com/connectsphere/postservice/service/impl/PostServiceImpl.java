@@ -1,7 +1,9 @@
 package com.connectsphere.postservice.service.impl;
 
 import com.connectsphere.postservice.client.FollowClient;
+import com.connectsphere.postservice.client.SearchClient;
 import com.connectsphere.postservice.dto.request.CreatePostRequest;
+import com.connectsphere.postservice.dto.request.IndexRequestDTO;
 import com.connectsphere.postservice.dto.request.UpdatePostRequest;
 import com.connectsphere.postservice.dto.response.PostResponse;
 import com.connectsphere.postservice.entity.Post;
@@ -23,10 +25,12 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final FollowClient followClient;
+    private final SearchClient searchClient;
 
-    public PostServiceImpl(PostRepository postRepository, FollowClient followClient) {
+    public PostServiceImpl(PostRepository postRepository, FollowClient followClient, SearchClient searchClient) {
         this.postRepository = postRepository;
         this.followClient = followClient;
+        this.searchClient = searchClient;
     }
 
     // 🔹 Create Post
@@ -40,6 +44,20 @@ public class PostServiceImpl implements PostService {
         post.setVisibility(request.getVisibility());
 
         Post savedPost = postRepository.save(post);
+
+        // 🔥 CALL SEARCH SERVICE (IMPORTANT)
+        try {
+            IndexRequestDTO indexRequestDTO = IndexRequestDTO.builder()
+                    .postId(savedPost.getId().toString())
+                    .content(savedPost.getContent())
+                    .build();
+
+            searchClient.indexPost(indexRequestDTO);
+        } catch (Exception ex) {
+            // ⚠️ Do NOT fail post creation if search fails
+            // Log instead (use logger in real project)
+            System.out.println("Search indexing failed: " + ex.getMessage());
+        }
 
         return mapToResponse(savedPost);
     }
@@ -261,5 +279,13 @@ public class PostServiceImpl implements PostService {
         List<Post> posts = postRepository.findByAuthorIdInOrderByCreatedAtDesc(followingIds);
 
         return posts.stream().map(this::mapToResponse).toList();
+    }
+
+    @Override
+    public List<PostResponse> getPostsByIds(List<UUID> postIds) {
+        return postRepository.findAllById(postIds)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 }

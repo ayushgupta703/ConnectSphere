@@ -43,4 +43,6 @@ public interface PostService {
     String getPostOwner(UUID postId);
 
     List<PostResponse> getFeed(UUID userId);
+
+    List<PostResponse> getPostsByIds(List<UUID> postIds);
 }
