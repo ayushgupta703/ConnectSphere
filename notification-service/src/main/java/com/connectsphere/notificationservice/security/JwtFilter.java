@@ -36,6 +36,10 @@ public class JwtFilter extends OncePerRequestFilter {
 
             try {
                 UUID userId = jwtUtil.extractUserId(token);
+
+                // Attach userId to request
+                request.setAttribute("userId", userId);
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 userId.toString(),

@@ -1,5 +1,6 @@
 package com.connectsphere.searchservice.service;
 
+import com.connectsphere.searchservice.dto.UserSearchResponse;
 import com.connectsphere.searchservice.entity.Hashtag;
 
 import java.util.List;
@@ -23,4 +24,16 @@ public interface SearchService {
 
     // 🔹 Get hashtags of a post
     List<String> getHashtagsForPost(String postId);
+
+    // 🔹 Search user by username
+    Object searchUserByUsername(String username);
+
+    // 🔹 Search users by name
+    List<Object> searchUsersByName(String name);
+
+    // 🔹 Smart unified user search
+    List<UserSearchResponse> searchUsers(String query);
+
+    // 🔹 Search posts by hashtag (full objects)
+    List<Object> searchPostsByHashtag(String tag);
 }

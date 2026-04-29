@@ -4,6 +4,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @FeignClient(name = "post-service", url = "http://localhost:8081")
 public interface PostClient {
@@ -18,7 +19,6 @@ public interface PostClient {
     // ✅ Get multiple posts (future optimization)
     @PostMapping("/api/v1/posts/bulk")
     List<Object> getPostsByIds(
-            @RequestBody List<String> postIds,
-            @RequestHeader("Authorization") String token
+            @RequestBody List<UUID> postIds
     );
 }

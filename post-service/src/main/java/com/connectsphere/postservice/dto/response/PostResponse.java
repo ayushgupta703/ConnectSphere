@@ -17,6 +17,7 @@ public class PostResponse {
     private PostVisibility visibility;
     private long likesCount;
     private long commentsCount;
+    private boolean likedByCurrentUser;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

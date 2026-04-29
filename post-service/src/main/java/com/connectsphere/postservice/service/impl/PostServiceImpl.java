@@ -1,6 +1,7 @@
 package com.connectsphere.postservice.service.impl;
 
 import com.connectsphere.postservice.client.FollowClient;
+import com.connectsphere.postservice.client.LikeClient;
 import com.connectsphere.postservice.client.SearchClient;
 import com.connectsphere.postservice.dto.request.CreatePostRequest;
 import com.connectsphere.postservice.dto.request.IndexRequestDTO;
@@ -25,11 +26,13 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final FollowClient followClient;
+    private final LikeClient likeClient;
     private final SearchClient searchClient;
 
-    public PostServiceImpl(PostRepository postRepository, FollowClient followClient, SearchClient searchClient) {
+    public PostServiceImpl(PostRepository postRepository, FollowClient followClient, LikeClient likeClient, SearchClient searchClient) {
         this.postRepository = postRepository;
         this.followClient = followClient;
+        this.likeClient = likeClient;
         this.searchClient = searchClient;
     }
 
@@ -120,7 +123,7 @@ public class PostServiceImpl implements PostService {
         postRepository.save(post);
     }
 
-    // 🔹 Mapper (Entity → DTO)
+    // 🔹 Mapper (Entity → DTO) — without like-check (for endpoints without auth context)
     private PostResponse mapToResponse(Post post) {
 
         PostResponse response = new PostResponse();
@@ -133,6 +136,22 @@ public class PostServiceImpl implements PostService {
         response.setCommentsCount(post.getCommentsCount());
         response.setCreatedAt(post.getCreatedAt());
         response.setUpdatedAt(post.getUpdatedAt());
+
+        return response;
+    }
+
+    // 🔹 Mapper (Entity → DTO) — with like-check for authenticated context
+    private PostResponse mapToResponse(Post post, UUID currentUserId, String token) {
+
+        PostResponse response = mapToResponse(post);
+
+        try {
+            Boolean liked = likeClient.hasReacted(post.getId(), currentUserId, token);
+            response.setLikedByCurrentUser(liked != null && liked);
+        } catch (Exception e) {
+            // If like-service is down, default to false rather than breaking the feed
+            response.setLikedByCurrentUser(false);
+        }
 
         return response;
     }
@@ -151,7 +170,7 @@ public class PostServiceImpl implements PostService {
 
         // PUBLIC → allow
         if (post.getVisibility() == PostVisibility.PUBLIC) {
-            return mapToResponse(post);
+            return mapToResponse(post, currentUserId, token);
         }
 
         // PRIVATE → only owner
@@ -159,7 +178,7 @@ public class PostServiceImpl implements PostService {
             if (!ownerId.equals(currentUserId)) {
                 throw new UnauthorizedException("Not allowed");
             }
-            return mapToResponse(post);
+            return mapToResponse(post, currentUserId, token);
         }
 
         // FOLLOWERS_ONLY
@@ -167,7 +186,7 @@ public class PostServiceImpl implements PostService {
 
             // Owner always allowed
             if (ownerId.equals(currentUserId)) {
-                return mapToResponse(post);
+                return mapToResponse(post, currentUserId, token);
             }
 
             try {
@@ -185,7 +204,7 @@ public class PostServiceImpl implements PostService {
             }
         }
 
-        return mapToResponse(post);
+        return mapToResponse(post, currentUserId, token);
     }
 
     @Override
@@ -263,22 +282,27 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public String getPostOwner(UUID postId) {
+    public UUID getPostOwner(UUID postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
-        return post.getUserId().toString();
+        return post.getUserId();
     }
 
     @Override
-    public List<PostResponse> getFeed(UUID userId) {
-        List<UUID> followingIds = followClient.getFollowing(userId);
+    public List<PostResponse> getFeed(UUID userId, String token) {
+        List<UUID> followingIds = new java.util.ArrayList<>(followClient.getFollowing(userId, token));
 
         followingIds.add(userId);
 
-        List<Post> posts = postRepository.findByAuthorIdInOrderByCreatedAtDesc(followingIds);
+        List<Post> posts = postRepository.findFeedPosts(
+                followingIds,
+                PostVisibility.PUBLIC
+        );
 
-        return posts.stream().map(this::mapToResponse).toList();
+        return posts.stream()
+                .map(post -> mapToResponse(post, userId, token))
+                .toList();
     }
 
     @Override

@@ -25,10 +25,11 @@ public class CommentController {
     public ResponseEntity<CommentResponseDto> addComment(
             @PathVariable UUID postId,
             @Valid @RequestBody CommentRequestDto request,
-            @RequestAttribute("userId") UUID userId
+            @RequestAttribute("userId") UUID userId,
+            @RequestHeader("Authorization") String token
     ) {
         return ResponseEntity.ok(
-                commentService.addComment(userId, postId, request.getContent(), request.getParentCommentId())
+                commentService.addComment(userId, postId, request.getContent(), request.getParentCommentId(), token)
         );
     }
 
@@ -36,9 +37,10 @@ public class CommentController {
     @DeleteMapping("/{commentId}")
     public ResponseEntity<String> deleteComment(
             @PathVariable UUID commentId,
-            @RequestAttribute("userId") UUID userId
+            @RequestAttribute("userId") UUID userId,
+            @RequestHeader("Authorization") String token
     ) {
-        commentService.deleteComment(commentId, userId);
+        commentService.deleteComment(commentId, userId, token);
         return ResponseEntity.ok("Comment deleted");
     }
 

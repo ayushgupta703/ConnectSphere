@@ -40,9 +40,9 @@ public interface PostService {
 
     Page<PostResponse> getFeedForUser(List<UUID> userIds, Pageable pageable);
 
-    String getPostOwner(UUID postId);
+    UUID getPostOwner(UUID postId);
 
-    List<PostResponse> getFeed(UUID userId);
+    List<PostResponse> getFeed(UUID userId, String token);
 
     List<PostResponse> getPostsByIds(List<UUID> postIds);
 }

@@ -8,9 +8,9 @@ import java.util.UUID;
 
 public interface CommentService {
 
-    CommentResponseDto addComment(UUID userId, UUID postId, String content, UUID parentCommentId);
+    CommentResponseDto addComment(UUID userId, UUID postId, String content, UUID parentCommentId, String token);
 
-    void deleteComment(UUID commentId, UUID userId);
+    void deleteComment(UUID commentId, UUID userId, String token);
 
     Page<CommentResponseDto> getComments(UUID postId, int page, int size);
 
