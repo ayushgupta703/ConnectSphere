@@ -28,7 +28,7 @@ public class CommentServiceImpl implements CommentService {
     // ✅ ADD COMMENT
     @Override
     @Transactional
-    public CommentResponseDto addComment(UUID userId, UUID postId, String content, UUID parentCommentId) {
+    public CommentResponseDto addComment(UUID userId, UUID postId, String content, UUID parentCommentId, String token) {
 
         Comment parent = null;
 
@@ -57,14 +57,14 @@ public class CommentServiceImpl implements CommentService {
         Comment saved = commentRepository.save(comment);
 
         // 🔗 Feign call to Post Service
-        postClient.incrementComments(postId);
+        postClient.incrementComments(postId, token);
 
         // 🔥 NOTIFICATION LOGIC STARTS HERE
 
         if (parentCommentId == null) {
             // 📌 CASE 1: COMMENT ON POST
 
-            UUID postOwnerId = postClient.getPostOwner(postId);
+            UUID postOwnerId = postClient.getPostOwner(postId, token);
 
             if (!postOwnerId.equals(userId)) {
 
@@ -74,7 +74,8 @@ public class CommentServiceImpl implements CommentService {
                                 .actorId(userId.toString())
                                 .type("COMMENT")
                                 .targetId(postId.toString())
-                                .build()
+                                .build(),
+                        token
                 );
             }
 
@@ -91,7 +92,8 @@ public class CommentServiceImpl implements CommentService {
                                 .actorId(userId.toString())
                                 .type("REPLY")
                                 .targetId(parentCommentId.toString())
-                                .build()
+                                .build(),
+                        token
                 );
             }
         }
@@ -104,7 +106,7 @@ public class CommentServiceImpl implements CommentService {
     // ✅ DELETE COMMENT (SOFT DELETE)
     @Override
     @Transactional
-    public void deleteComment(UUID commentId, UUID userId) {
+    public void deleteComment(UUID commentId, UUID userId, String token) {
 
         Comment comment = commentRepository.findByIdAndDeletedFalse(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
@@ -117,7 +119,7 @@ public class CommentServiceImpl implements CommentService {
         commentRepository.save(comment);
 
         // 🔥 Feign call
-        postClient.decrementComments(comment.getPostId());
+        postClient.decrementComments(comment.getPostId(), token);
     }
 
     // ✅ GET COMMENTS (TOP-LEVEL)

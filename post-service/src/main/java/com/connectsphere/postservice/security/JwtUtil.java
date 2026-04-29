@@ -13,6 +13,13 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
+    private String resolveToken(String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            return token.substring(7);
+        }
+        return token;
+    }
+
     public UUID extractUserId(String token) {
         Claims claims = extractAllClaims(token);
         return UUID.fromString(claims.get("userId", String.class));
@@ -27,7 +34,7 @@ public class JwtUtil {
         return Jwts.parserBuilder()
                 .setSigningKey(secret.getBytes())
                 .build()
-                .parseClaimsJws(token)
+                .parseClaimsJws(resolveToken(token))
                 .getBody();
     }
 }

@@ -17,5 +17,5 @@ public interface FollowClient {
             @RequestHeader("Authorization") String token);
 
     @GetMapping("/api/v1/follows/following/{userId}")
-    List<UUID> getFollowing(@PathVariable UUID userId);
+    List<UUID> getFollowing(@PathVariable UUID userId, @RequestHeader("Authorization") String token);
 }

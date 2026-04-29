@@ -5,13 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @Builder
 public class StoryResponse {
 
-    private Long id;
-    private Long authorId;
+    private UUID id;
+    private UUID authorId;
     private String mediaUrl;
     private String caption;
     private MediaType mediaType;

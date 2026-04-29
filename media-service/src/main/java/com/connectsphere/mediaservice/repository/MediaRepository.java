@@ -5,12 +5,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface MediaRepository extends JpaRepository<Media, Long> {
+public interface MediaRepository extends JpaRepository<Media, java.util.UUID> {
 
     // 🔹 Get media linked to a post (ONLY active)
-    List<Media> findByLinkedPostIdAndIsDeletedFalse(Long postId);
+    List<Media> findByLinkedPostIdAndIsDeletedFalse(java.util.UUID postId);
 
     // 🔹 Get media uploaded by user
-    List<Media> findByUploaderIdAndIsDeletedFalse(Long uploaderId);
+    List<Media> findByUploaderIdAndIsDeletedFalse(java.util.UUID uploaderId);
+
+    // 🔹 Get media by type
+    List<Media> findByMediaTypeAndIsDeletedFalse(com.connectsphere.mediaservice.entity.MediaType mediaType);
 
 }

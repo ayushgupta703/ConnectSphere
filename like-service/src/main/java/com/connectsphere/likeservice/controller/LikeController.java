@@ -20,18 +20,20 @@ public class LikeController {
     @PostMapping
     public ResponseEntity<String> react(
             @Valid @RequestBody ReactionRequest request,
-            @RequestAttribute("userId") UUID userId
+            @RequestAttribute("userId") UUID userId,
+            @RequestHeader("Authorization") String token
     ) {
-        likeService.react(request, userId);
+        likeService.react(request, userId, token);
         return ResponseEntity.ok("Reaction added/updated");
     }
 
     @DeleteMapping("/{postId}")
     public ResponseEntity<String> removeReaction(
             @PathVariable UUID postId,
-            @RequestAttribute("userId") UUID userId
+            @RequestAttribute("userId") UUID userId,
+            @RequestHeader("Authorization") String token
     ) {
-        likeService.removeReaction(postId, userId);
+        likeService.removeReaction(postId, userId, token);
         return ResponseEntity.ok("Reaction removed");
     }
 
@@ -43,5 +45,13 @@ public class LikeController {
     @GetMapping("/{postId}/summary")
     public ResponseEntity<ReactionSummaryResponse> summary(@PathVariable UUID postId) {
         return ResponseEntity.ok(likeService.getReactionSummary(postId));
+    }
+
+    @GetMapping("/{postId}/has-reacted")
+    public ResponseEntity<Boolean> hasReacted(
+            @PathVariable UUID postId,
+            @RequestParam UUID userId
+    ) {
+        return ResponseEntity.ok(likeService.hasReacted(postId, userId));
     }
 }

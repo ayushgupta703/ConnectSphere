@@ -7,9 +7,9 @@ import java.util.UUID;
 
 public interface LikeService {
 
-    void react(ReactionRequest request, UUID userId);
+    void react(ReactionRequest request, UUID userId, String token);
 
-    void removeReaction(UUID postId, UUID userId);
+    void removeReaction(UUID postId, UUID userId, String token);
 
     boolean hasReacted(UUID postId, UUID userId);
 

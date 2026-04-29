@@ -10,6 +10,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -47,4 +49,48 @@ public class AuthController {
                 authService.getCurrentUser(userDetails.getUsername())
         );
     }
-}
+
+    @PutMapping("/profile")
+    public ResponseEntity<UserResponse> updateProfile(
+            @RequestBody UpdateProfileRequest request,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok(
+                authService.updateProfile(userDetails.getUsername(), request)
+        );
+    }
+
+    @GetMapping("/users/{id}")
+    public ResponseEntity<UserResponse> getUserById(@PathVariable UUID id) {
+        return ResponseEntity.ok(authService.getUserById(id));
+    }
+
+    @GetMapping("/users/search/username")
+    public ResponseEntity<UserResponse> searchUserByUsername(@RequestParam String value) {
+        return ResponseEntity.ok(authService.getUserByUsername(value));
+    }
+
+    @GetMapping("/users/search/name")
+    public ResponseEntity<java.util.List<UserResponse>> searchUsersByName(@RequestParam String value) {
+        return ResponseEntity.ok(authService.searchUsersByName(value));
+    }
+
+    @GetMapping("/users/search/prefix")
+    public ResponseEntity<java.util.List<UserResponse>> searchUsersByUsernamePrefix(@RequestParam String value) {
+        return ResponseEntity.ok(authService.searchUsersByUsernamePrefix(value));
+    }
+
+    @DeleteMapping("/me")
+
+    public ResponseEntity<Void> deactivateAccount(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        authService.deactivateAccount(userDetails.getUsername());
+        return ResponseEntity.noContent().build();
+    }
+}

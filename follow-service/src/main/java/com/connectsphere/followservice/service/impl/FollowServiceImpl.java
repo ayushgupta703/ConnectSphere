@@ -10,9 +10,12 @@ import com.connectsphere.followservice.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +25,7 @@ public class FollowServiceImpl implements FollowService {
     private final NotificationClient notificationClient;
 
     @Override
-    public FollowResponseDto followUser(UUID targetUserId) {
+    public FollowResponseDto followUser(UUID targetUserId, String token) {
 
         UUID currentUserId = SecurityUtils.getCurrentUserId();
 
@@ -53,15 +56,16 @@ public class FollowServiceImpl implements FollowService {
                         .actorId(currentUserId.toString())
                         .type("FOLLOW")
                         .targetId(targetUserId.toString())
-                        .build()
+                        .build(),
+                token
         );
 
         return mapToDto(saved);
     }
 
     @Override
-    public void unfollowUser(UUID targetUserId) {
-        UUID currentUserId = SecurityUtils.getCurrentUserId();
+    @Transactional
+    public void unfollowUser(UUID targetUserId, UUID currentUserId) {
         repository.deleteByFollowerIdAndFollowingId(currentUserId, targetUserId);
     }
 
@@ -77,6 +81,14 @@ public class FollowServiceImpl implements FollowService {
         Pageable pageable = PageRequest.of(page, size);
         return repository.findByFollowerId(userId, pageable)
                 .map(this::mapToDto);
+    }
+
+    @Override
+    public List<UUID> getFollowingIds(UUID userId) {
+        return repository.findByFollowerId(userId)
+                .stream()
+                .map(follow -> follow.getFollowingId())
+                .collect(Collectors.toList());
     }
 
     @Override

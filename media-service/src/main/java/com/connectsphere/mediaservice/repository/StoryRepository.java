@@ -7,10 +7,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface StoryRepository extends JpaRepository<Story, Long> {
+public interface StoryRepository extends JpaRepository<Story, java.util.UUID> {
 
     // 🔹 Get active stories of a specific user
-    List<Story> findByAuthorIdAndIsActiveTrue(Long authorId);
+    List<Story> findByAuthorIdAndIsActiveTrue(java.util.UUID authorId);
+
+    // 🔹 Get active stories (global)
+    List<Story> findByIsActiveTrueAndExpiresAtAfter(LocalDateTime now);
 
     // 🔥 Feed query (IMPORTANT)
     @Query("""
@@ -19,7 +22,7 @@ public interface StoryRepository extends JpaRepository<Story, Long> {
         AND s.isActive = true
         AND s.expiresAt > :now
     """)
-    List<Story> findActiveStoriesForFeed(List<Long> followingIds, LocalDateTime now);
+    List<Story> findActiveStoriesForFeed(List<java.util.UUID> followingIds, LocalDateTime now);
 
     // 🔥 Bulk expiry update (IMPORTANT)
     @Modifying

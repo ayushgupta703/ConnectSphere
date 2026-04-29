@@ -30,12 +30,16 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        if (authHeader != null && authHeader.startsWith("Bearer")) {
 
-            String token = authHeader.substring(7);
+            String token = authHeader.replace("Bearer", "").trim();
 
             try {
                 UUID userId = jwtUtil.extractUserId(token);
+
+                // Attach userId to request
+                request.setAttribute("userId", userId);
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 userId.toString(),

@@ -29,49 +29,50 @@ public class PostController {
 
     // 🔹 Create Post
     @PostMapping
-    public PostResponse createPost(
+    public ResponseEntity<PostResponse> createPost(
             @RequestAttribute("userId") UUID userId,   // TEMP (later from JWT)
             @Valid @RequestBody CreatePostRequest request
     ) {
-        return postService.createPost(userId, request);
+        return ResponseEntity.ok(postService.createPost(userId, request));
     }
 
     // 🔹 Get All Posts (Pagination)
     @GetMapping
-    public Page<PostResponse> getAllPosts(
+    public ResponseEntity<Page<PostResponse>> getAllPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return postService.getAllPosts(PageRequest.of(page, size));
+        return ResponseEntity.ok(postService.getAllPosts(PageRequest.of(page, size)));
     }
 
     // 🔹 Get Posts By User
     @GetMapping("/user/{userId}")
-    public Page<PostResponse> getPostsByUser(
+    public ResponseEntity<Page<PostResponse>> getPostsByUser(
             @PathVariable UUID userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return postService.getPostsByUser(userId, PageRequest.of(page, size));
+        return ResponseEntity.ok(postService.getPostsByUser(userId, PageRequest.of(page, size)));
     }
 
     // 🔹 Update Post
     @PutMapping("/{postId}")
-    public PostResponse updatePost(
+    public ResponseEntity<PostResponse> updatePost(
             @PathVariable UUID postId,
             @RequestAttribute("userId") UUID userId,
             @Valid @RequestBody UpdatePostRequest request
     ) {
-        return postService.updatePost(postId, userId, request);
+        return ResponseEntity.ok(postService.updatePost(postId, userId, request));
     }
 
     // 🔹 Delete Post (Soft Delete)
     @DeleteMapping("/{postId}")
-    public void deletePost(
+    public ResponseEntity<Void> deletePost(
             @PathVariable UUID postId,
             @RequestAttribute("userId") UUID userId
     ) {
         postService.deletePost(postId, userId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{postId}")
@@ -87,52 +88,57 @@ public class PostController {
     }
 
     @GetMapping("/search")
-    public Page<PostResponse> searchPosts(
+    public ResponseEntity<Page<PostResponse>> searchPosts(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return postService.searchPosts(keyword, PageRequest.of(page, size));
+        return ResponseEntity.ok(postService.searchPosts(keyword, PageRequest.of(page, size)));
     }
 
     @PatchMapping("/{postId}/visibility")
-    public void changeVisibility(
+    public ResponseEntity<Void> changeVisibility(
             @PathVariable UUID postId,
             @RequestAttribute("userId") UUID userId,
             @RequestParam String visibility
     ) {
         postService.changeVisibility(postId, userId,
                 PostVisibility.valueOf(visibility));
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{postId}/like")
-    public void like(@PathVariable UUID postId) {
+    public ResponseEntity<Void> like(@PathVariable UUID postId) {
         postService.incrementLikes(postId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{postId}/unlike")
-    public void unlike(@PathVariable UUID postId) {
+    public ResponseEntity<Void> unlike(@PathVariable UUID postId) {
         postService.decrementLikes(postId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{postId}/comment")
-    public void incrementComment(@PathVariable UUID postId) {
+    public ResponseEntity<Void> incrementComment(@PathVariable UUID postId) {
         postService.incrementComments(postId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{postId}/uncomment")
-    public void decrementComment(@PathVariable UUID postId) {
+    public ResponseEntity<Void> decrementComment(@PathVariable UUID postId) {
         postService.decrementComments(postId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/count/{userId}")
-    public long count(@PathVariable UUID userId) {
-        return postService.getPostCount(userId);
+    public ResponseEntity<Long> count(@PathVariable UUID userId) {
+        return ResponseEntity.ok(postService.getPostCount(userId));
     }
 
     @GetMapping("/{postId}/owner")
-    public String getPostOwner(@PathVariable UUID postId) {
-        return postService.getPostOwner(postId);
+    public ResponseEntity<UUID> getPostOwner(@PathVariable UUID postId) {
+        return ResponseEntity.ok(postService.getPostOwner(postId));
     }
 
     @GetMapping("/feed")
@@ -141,7 +147,7 @@ public class PostController {
 
         UUID userId = jwtUtil.extractUserId(token);
 
-        return ResponseEntity.ok(postService.getFeed(userId));
+        return ResponseEntity.ok(postService.getFeed(userId, token));
     }
 
     @PostMapping("/bulk")

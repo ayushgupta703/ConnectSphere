@@ -49,15 +49,25 @@ public class NotificationServiceImpl implements NotificationService {
     public void createNotification(NotificationRequest request) {
 
         Notification notification = Notification.builder()
-                .recipientId(request.getRecipientId())
-                .actorId(request.getActorId())
+                .recipientId(clean(request.getRecipientId()))
+                .actorId(clean(request.getActorId()))
                 .type(NotificationType.valueOf(request.getType()))
-                .targetId(request.getTargetId())
+                .targetId(clean(request.getTargetId()))
                 .targetType("POST")
                 .message(generateMessage(request.getType()))
                 .build();
 
         repository.save(notification);
+    }
+
+    /**
+     * Strip stray JSON quotes and whitespace from ID values.
+     * Guards against Feign deserialization issues where a UUID
+     * arrives as {@code "\"uuid\""} instead of {@code "uuid"}.
+     */
+    private String clean(String value) {
+        if (value == null) return null;
+        return value.replace("\"", "").trim();
     }
 
     private String generateMessage(String type) {

@@ -1,70 +1,80 @@
 package com.connectsphere.mediaservice.controller;
 
-import com.connectsphere.mediaservice.dto.StoryRequest;
 import com.connectsphere.mediaservice.dto.StoryResponse;
-import com.connectsphere.mediaservice.entity.Story;
-import com.connectsphere.mediaservice.service.StoryService;
-import jakarta.validation.Valid;
+import com.connectsphere.mediaservice.service.MediaService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/stories")
 @RequiredArgsConstructor
 public class StoryController {
 
-    private final StoryService storyService;
+    private final MediaService mediaService;
 
     // 📖 Create Story
     @PostMapping
-    public StoryResponse createStory(@Valid @RequestBody StoryRequest request) {
-
-        Story story = Story.builder()
-                .authorId(request.getAuthorId())
-                .mediaUrl(request.getMediaUrl())
-                .caption(request.getCaption())
-                .mediaType(request.getMediaType())
-                .build();
-
-        Story saved = storyService.createStory(story);
-
-        return mapToResponse(saved);
-    }
-
-    // 📖 Story Feed (FOLLOW BASED)
-    @GetMapping("/feed")
-    public List<Story> getStoryFeed(
-            @RequestHeader("Authorization") String token,
-            @RequestParam Long userId
+    public ResponseEntity<StoryResponse> createStory(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "caption", required = false) String caption,
+            HttpServletRequest request
     ) {
-        return storyService.getStoryFeed(userId, token);
+        String userIdStr = (String) request.getAttribute("userId");
+
+        if (userIdStr == null) {
+            throw new RuntimeException("User Not Authenticated");
+        }
+
+        UUID authorId = UUID.fromString(userIdStr);
+        return ResponseEntity.ok(mediaService.createStory(file, authorId, caption));
     }
 
-    // 📖 View Story (increment)
-    @PostMapping("/{storyId}/view")
-    public void viewStory(@PathVariable Long storyId) {
-        storyService.viewStory(storyId);
+    // 📖 Get Active Stories (All)
+    @GetMapping("/active")
+    public ResponseEntity<List<StoryResponse>> getActiveStories() {
+        return ResponseEntity.ok(mediaService.getActiveStories());
     }
 
     // 📖 Get User Stories
     @GetMapping("/user/{userId}")
-    public List<Story> getStoriesByUser(@PathVariable Long userId) {
-        return storyService.getStoriesByUser(userId);
+    public ResponseEntity<List<StoryResponse>> getStoriesByUser(@PathVariable java.util.UUID userId) {
+        return ResponseEntity.ok(mediaService.getStoriesByUser(userId));
     }
 
-    // 🔁 Mapper
-    private StoryResponse mapToResponse(Story story) {
-        return StoryResponse.builder()
-                .id(story.getId())
-                .authorId(story.getAuthorId())
-                .mediaUrl(story.getMediaUrl())
-                .caption(story.getCaption())
-                .mediaType(story.getMediaType())
-                .viewsCount(story.getViewsCount())
-                .createdAt(story.getCreatedAt())
-                .expiresAt(story.getExpiresAt())
-                .build();
+    // 📖 View Story (unique)
+    @PostMapping("/{storyId}/view")
+    public ResponseEntity<Void> viewStory(
+            @PathVariable java.util.UUID storyId,
+            HttpServletRequest request
+    ) {
+        String userIdStr = (String) request.getAttribute("userId");
+        if (userIdStr == null) {
+            throw new RuntimeException("User Not Authenticated");
+        }
+        UUID viewerId = UUID.fromString(userIdStr);
+        mediaService.viewStory(storyId, viewerId);
+        return ResponseEntity.ok().build();
+    }
+
+    // 📖 Delete Story (Soft)
+    @DeleteMapping("/{storyId}")
+    public ResponseEntity<Void> deleteStory(
+            @PathVariable java.util.UUID storyId,
+            HttpServletRequest request
+    ) {
+        String userIdStr = (String) request.getAttribute("userId");
+        if (userIdStr == null) {
+            throw new RuntimeException("User Not Authenticated");
+        }
+        UUID authorId = UUID.fromString(userIdStr);
+
+        mediaService.deleteStory(storyId, authorId);
+        return ResponseEntity.noContent().build();
     }
 }

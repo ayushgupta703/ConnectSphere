@@ -19,10 +19,10 @@ import java.time.LocalDateTime;
 public class Media {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    private java.util.UUID mediaId;
 
-    private Long uploaderId;
+    private java.util.UUID uploaderId;
 
     @Column(nullable = false)
     private String url;
@@ -34,7 +34,7 @@ public class Media {
 
     private String mimeType;
 
-    private Long linkedPostId;
+    private java.util.UUID linkedPostId;
 
     private LocalDateTime uploadedAt;
 

@@ -11,9 +11,16 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
-    public Long extractUserId(String token) {
+    private String resolveToken(String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            return token.substring(7);
+        }
+        return token;
+    }
+
+    public String extractUserId(String token) {
         Claims claims = extractAllClaims(token);
-        return Long.parseLong(claims.get("userId").toString());
+        return claims.get("userId").toString();
     }
 
     public String extractRole(String token) {
@@ -34,7 +41,7 @@ public class JwtUtil {
         return Jwts.parserBuilder()
                 .setSigningKey(secret.getBytes())
                 .build()
-                .parseClaimsJws(token)
+                .parseClaimsJws(resolveToken(token))
                 .getBody();
     }
 }

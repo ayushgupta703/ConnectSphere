@@ -19,10 +19,10 @@ import java.time.LocalDateTime;
 public class Story {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    private java.util.UUID storyId;
 
-    private Long authorId;
+    private java.util.UUID authorId;
 
     @Column(nullable = false)
     private String mediaUrl;
