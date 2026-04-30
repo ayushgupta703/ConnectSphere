@@ -60,14 +60,12 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String accessToken = jwtService.generateToken(user);
         String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 
-        // 🔁 Return tokens (simple JSON response)
-        response.setContentType("application/json");
-        response.getWriter().write(
-                String.format(
-                        "{\"token\":\"%s\",\"refreshToken\":\"%s\"}",
-                        accessToken,
-                        refreshToken
-                )
+        // 🔁 Redirect back to frontend with tokens in query parameters
+        String targetUrl = String.format(
+                "http://localhost:5173/oauth-callback?token=%s&refreshToken=%s",
+                accessToken,
+                refreshToken
         );
+        response.sendRedirect(targetUrl);
     }
 }
