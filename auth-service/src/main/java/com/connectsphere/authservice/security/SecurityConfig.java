@@ -45,6 +45,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/auth/users/search/**").permitAll()
+                        // Internal service-to-service endpoint (secret-header protected in controller)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/users/batch-deleted").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth

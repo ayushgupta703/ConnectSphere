@@ -45,6 +45,7 @@ public class AdminService {
         User user = getUserById(id);
         user.setStatus(UserStatus.DELETED);
         user.setIsActive(false);
+        user.setIsDeleted(true);
     }
 
     // ========================= HELPER =========================
@@ -62,6 +63,7 @@ public class AdminService {
                 user.getProfilePicUrl(),
                 user.getRole(),
                 user.getStatus(),
+                user.getIsDeleted(),
                 user.getCreatedAt()
         );
     }

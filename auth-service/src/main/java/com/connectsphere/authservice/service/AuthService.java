@@ -8,14 +8,18 @@ import com.connectsphere.authservice.repository.UserRepository;
 import com.connectsphere.authservice.security.JwtService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -125,7 +129,6 @@ public class AuthService {
 
     // ========================= CURRENT USER =========================
     public UserResponse getCurrentUser(String email) {
-
         User user = userRepository.findByEmailIgnoreCase(normalizeEmail(email))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -134,7 +137,8 @@ public class AuthService {
 
     public UserResponse getUserById(UUID id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .filter(u -> !Boolean.TRUE.equals(u.getIsDeleted()))
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return mapToUserResponse(user);
     }
@@ -142,6 +146,7 @@ public class AuthService {
 
     public UserResponse getUserByUsername(String username) {
         User user = userRepository.findByUsernameIgnoreCase(username)
+                .filter(u -> !Boolean.TRUE.equals(u.getIsDeleted()))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return mapToUserResponse(user);
     }
@@ -149,22 +154,36 @@ public class AuthService {
     public java.util.List<UserResponse> searchUsersByName(String name) {
         return userRepository.findByFullNameContainingIgnoreCase(name)
                 .stream()
+                .filter(user -> !Boolean.TRUE.equals(user.getIsDeleted()))
                 .map(this::mapToUserResponse)
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     // ========================= SEARCH USERS =========================
     public java.util.List<UserResponse> searchUsersByUsernamePrefix(String prefix) {
         return userRepository.findByUsernameStartingWithIgnoreCase(prefix)
                 .stream()
+                .filter(user -> !Boolean.TRUE.equals(user.getIsDeleted()))
                 .map(this::mapToUserResponse)
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
+    }
+
+    // ========================= BATCH DELETED USERS =========================
+    public Set<UUID> getBatchDeletedUsers(Set<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Set.of();
+        }
+        return userRepository.findAllById(ids)
+                .stream()
+                .filter(user -> Boolean.TRUE.equals(user.getIsDeleted()))
+                .map(User::getId)
+                .collect(Collectors.toSet());
     }
 
     @Transactional
     public UserResponse updateProfile(String username, UpdateProfileRequest request) {
-        System.out.println("Updating profile for user: " + username);
-        System.out.println("Request: " + request);
+        log.info("Updating profile for user: {}", username);
+        log.debug("Update request payload: {}", request);
 
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -216,6 +235,7 @@ public class AuthService {
 
         user.setIsActive(false);
         user.setStatus(UserStatus.DELETED);
+        user.setIsDeleted(true);
         userRepository.save(user);
 
         // Optionally, invalidate all refresh tokens for this user
@@ -234,6 +254,7 @@ public class AuthService {
                 user.getProfilePicUrl(),
                 user.getRole(),
                 user.getStatus(),
+                user.getIsDeleted(),
                 user.getCreatedAt()
         );
     }

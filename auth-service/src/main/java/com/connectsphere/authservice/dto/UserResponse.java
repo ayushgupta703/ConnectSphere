@@ -15,6 +15,7 @@ public record UserResponse(
         String profilePicUrl,
         UserRole role,
         UserStatus status,
+        Boolean isDeleted,
         Instant createdAt
 ) {
 }

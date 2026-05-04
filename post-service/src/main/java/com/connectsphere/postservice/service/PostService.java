@@ -14,7 +14,7 @@ public interface PostService {
 
     PostResponse createPost(UUID userId, CreatePostRequest request);
 
-    Page<PostResponse> getAllPosts(Pageable pageable);
+    Page<PostResponse> getAllPosts(UUID currentUserId, Pageable pageable);
 
     Page<PostResponse> getPostsByUser(UUID userId, Pageable pageable);
 
@@ -24,7 +24,7 @@ public interface PostService {
 
     void deletePost(UUID postId, UUID userId);
 
-    Page<PostResponse> searchPosts(String keyword, Pageable pageable);
+    Page<PostResponse> searchPosts(UUID currentUserId, String keyword, Pageable pageable);
 
     void changeVisibility(UUID postId, UUID userId, PostVisibility visibility);
 
@@ -38,11 +38,11 @@ public interface PostService {
 
     long getPostCount(UUID userId);
 
-    Page<PostResponse> getFeedForUser(List<UUID> userIds, Pageable pageable);
+    Page<PostResponse> getFeedForUser(UUID currentUserId, List<UUID> userIds, Pageable pageable);
 
     UUID getPostOwner(UUID postId);
 
     List<PostResponse> getFeed(UUID userId, String token);
 
-    List<PostResponse> getPostsByIds(List<UUID> postIds);
+    List<PostResponse> getPostsByIds(UUID currentUserId, List<UUID> postIds);
 }

@@ -8,6 +8,7 @@ import com.connectsphere.followservice.repository.FollowRepository;
 import com.connectsphere.followservice.service.FollowService;
 import com.connectsphere.followservice.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FollowServiceImpl implements FollowService {
@@ -49,16 +51,21 @@ public class FollowServiceImpl implements FollowService {
 
         Follow saved = repository.save(follow);
 
-        // 🔥 SEND NOTIFICATION
-        notificationClient.sendNotification(
-                com.connectsphere.followservice.dto.NotificationRequest.builder()
-                        .recipientId(targetUserId.toString())
-                        .actorId(currentUserId.toString())
-                        .type("FOLLOW")
-                        .targetId(targetUserId.toString())
-                        .build(),
-                token
-        );
+        // 🔥 SEND NOTIFICATION (non-blocking — notification-service failures must not break the follow action)
+        try {
+            notificationClient.sendNotification(
+                    com.connectsphere.followservice.dto.NotificationRequest.builder()
+                            .recipientId(targetUserId.toString())
+                            .actorId(currentUserId.toString())
+                            .type("FOLLOW")
+                            .targetId(targetUserId.toString())
+                            .build(),
+                    token
+            );
+        } catch (Exception e) {
+            log.error("Notification delivery failed for FOLLOW event: followerId={}, targetId={} — {}",
+                    currentUserId, targetUserId, e.getMessage());
+        }
 
         return mapToDto(saved);
     }

@@ -217,9 +217,8 @@ public class CommentServiceImpl implements CommentService {
     // 🔥 MAPPER METHOD
     private CommentResponseDto mapToResponse(Comment comment) {
 
-        int repliesCount = commentRepository
-                .findByParentCommentIdAndDeletedFalse(comment.getId())
-                .size();
+        long repliesCount = commentRepository
+                .countByParentCommentIdAndDeletedFalse(comment.getId());
 
         return CommentResponseDto.builder()
                 .id(comment.getId())

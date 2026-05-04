@@ -16,7 +16,7 @@ public class CommentResponseDto {
     private UUID parentCommentId;
     private String content;
     private int likesCount;
-    private int repliesCount;
+    private long repliesCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

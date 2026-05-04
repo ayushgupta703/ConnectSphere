@@ -4,12 +4,14 @@ import com.connectsphere.authservice.dto.*;
 import com.connectsphere.authservice.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -18,6 +20,9 @@ import java.util.UUID;
 public class AuthController {
 
     private final AuthService authService;
+
+    @Value("${internal.service.secret}")
+    private String internalServiceSecret;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -85,12 +90,28 @@ public class AuthController {
     }
 
     @DeleteMapping("/me")
-
     public ResponseEntity<Void> deactivateAccount(@AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         authService.deactivateAccount(userDetails.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    // ========================= INTERNAL (service-to-service) =========================
+
+    /**
+     * Returns the subset of provided user IDs that belong to soft-deleted users.
+     * Protected by a shared internal secret header — NOT intended for public/frontend use.
+     */
+    @PostMapping("/users/batch-deleted")
+    public ResponseEntity<Set<UUID>> getBatchDeletedUsers(
+            @RequestBody Set<UUID> userIds,
+            @RequestHeader(value = "X-Internal-Service-Secret", required = false) String secret
+    ) {
+        if (!internalServiceSecret.equals(secret)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(authService.getBatchDeletedUsers(userIds));
     }
 }

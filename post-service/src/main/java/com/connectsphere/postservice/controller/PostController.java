@@ -39,10 +39,12 @@ public class PostController {
     // 🔹 Get All Posts (Pagination)
     @GetMapping
     public ResponseEntity<Page<PostResponse>> getAllPosts(
+            @RequestHeader("Authorization") String token,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(postService.getAllPosts(PageRequest.of(page, size)));
+        UUID userId = jwtUtil.extractUserId(token);
+        return ResponseEntity.ok(postService.getAllPosts(userId, PageRequest.of(page, size)));
     }
 
     // 🔹 Get Posts By User
@@ -89,11 +91,13 @@ public class PostController {
 
     @GetMapping("/search")
     public ResponseEntity<Page<PostResponse>> searchPosts(
+            @RequestHeader("Authorization") String token,
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(postService.searchPosts(keyword, PageRequest.of(page, size)));
+        UUID userId = jwtUtil.extractUserId(token);
+        return ResponseEntity.ok(postService.searchPosts(userId, keyword, PageRequest.of(page, size)));
     }
 
     @PatchMapping("/{postId}/visibility")
@@ -152,8 +156,10 @@ public class PostController {
 
     @PostMapping("/bulk")
     public ResponseEntity<List<PostResponse>> getPostsByIds(
+            @RequestHeader("Authorization") String token,
             @RequestBody List<UUID> postIds
     ) {
-        return ResponseEntity.ok(postService.getPostsByIds(postIds));
+        UUID userId = jwtUtil.extractUserId(token);
+        return ResponseEntity.ok(postService.getPostsByIds(userId, postIds));
     }
 }

@@ -43,6 +43,8 @@ public class SecurityConfig {
                                                 // 📸 Media APIs (protected)
                                                 .requestMatchers("/api/v1/media/**").authenticated()
 
+                                                .requestMatchers("/uploads/**").permitAll()
+
                                                 // 📖 Story APIs (protected)
                                                 .requestMatchers("/api/v1/stories/**").authenticated()
 

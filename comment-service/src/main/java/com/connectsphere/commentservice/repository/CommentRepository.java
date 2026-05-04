@@ -17,6 +17,9 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
     // ✅ REPLIES
     List<Comment> findByParentCommentIdAndDeletedFalse(UUID parentCommentId);
 
+    // ✅ COUNT REPLIES
+    long countByParentCommentIdAndDeletedFalse(UUID parentCommentId);
+
     // ✅ COUNT COMMENTS
     long countByPostIdAndDeletedFalse(UUID postId);
 

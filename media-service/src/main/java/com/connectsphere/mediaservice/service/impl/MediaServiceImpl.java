@@ -33,8 +33,8 @@ public class MediaServiceImpl implements MediaService {
     private final FileUtil fileUtil;
 
     private static final String BASE_URL = "http://localhost:8087/uploads/";
-    private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-    private static final long MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
+    private static final long MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50MB
+    private static final long MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200MB
 
     @Override
     @Transactional

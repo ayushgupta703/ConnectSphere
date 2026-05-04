@@ -26,7 +26,13 @@ public class FileUtil {
 
     public String save(MultipartFile file) {
         try {
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            String originalName = file.getOriginalFilename();
+
+// 🔥 sanitize filename
+            String safeName = originalName
+                    .replaceAll("[^a-zA-Z0-9\\.\\-]", "_"); // removes #, emojis, spaces
+
+            String filename = UUID.randomUUID() + "_" + safeName;
             Files.copy(file.getInputStream(), this.root.resolve(filename));
             return filename;
         } catch (Exception e) {

@@ -41,7 +41,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column
     private String passwordHash;
 
     @Column(nullable = false, unique = true)
@@ -62,6 +62,8 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private UserStatus status = UserStatus.ACTIVE;
+
+    private Boolean isDeleted = false;
 
     @CreationTimestamp
     private Instant createdAt;

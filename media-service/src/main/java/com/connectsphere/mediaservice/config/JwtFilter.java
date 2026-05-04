@@ -27,6 +27,14 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        String path = request.getRequestURI();
+
+// 🔥 Skip JWT filter for static media
+        if (path.startsWith("/uploads/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -53,9 +61,9 @@ public class JwtFilter extends OncePerRequestFilter {
                     System.out.println("✅ Auth set: " + SecurityContextHolder.getContext().getAuthentication());
                 }
 
-            } catch (Exception ignored) {
+            } catch (Exception e) {
                 // optionally log
-                System.out.println("❌ JWT ERROR: " + ignored.getMessage());
+                System.out.println("❌ JWT ERROR: " + e.getMessage());
             }
         }
 
