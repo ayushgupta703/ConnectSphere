@@ -1,13 +1,13 @@
 package com.connectsphere.likeservice.service.impl;
 
-import com.connectsphere.likeservice.client.NotificationClient;
 import com.connectsphere.likeservice.client.PostClient;
-import com.connectsphere.likeservice.dto.NotificationRequest;
 import com.connectsphere.likeservice.dto.ReactionRequest;
 import com.connectsphere.likeservice.dto.ReactionSummaryResponse;
 import com.connectsphere.likeservice.entity.Like;
 import com.connectsphere.likeservice.entity.ReactionType;
+import com.connectsphere.likeservice.event.LikeNotificationEvent;
 import com.connectsphere.likeservice.exception.ResourceNotFoundException;
+import com.connectsphere.likeservice.producer.NotificationEventProducer;
 import com.connectsphere.likeservice.repository.LikeRepository;
 import com.connectsphere.likeservice.service.LikeService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class LikeServiceImpl implements LikeService {
 
     private final LikeRepository likeRepository;
     private final PostClient postClient;
-    private final NotificationClient notificationClient;
+    private final NotificationEventProducer notificationEventProducer;
 
     @Override
     public void react(ReactionRequest request, UUID userId, String token) {
@@ -59,18 +59,17 @@ public class LikeServiceImpl implements LikeService {
             // ❌ DON'T NOTIFY SELF
             if (!userId.equals(postOwnerId)) {
 
-                NotificationRequest notification = NotificationRequest.builder()
-                        .recipientId(postOwnerId.toString())
-                        .actorId(userId.toString())
-                        .type("LIKE")
-                        .targetId(request.getPostId().toString())
-                        .build();
-
                 try {
-                    notificationClient.sendNotification(notification, token);
+                    LikeNotificationEvent event = LikeNotificationEvent.builder()
+                            .recipientId(postOwnerId.toString())
+                            .actorId(userId.toString())
+                            .type("LIKE")
+                            .targetId(request.getPostId().toString())
+                            .build();
+
+                    notificationEventProducer.publishNotificationEvent(event);
                 } catch (Exception e) {
-                    log.error("Notification call failed for like on post {} by user {} — continuing",
-                            request.getPostId(), userId, e);
+                    log.error("Failed To Publish Like Notification Event for post {}", request.getPostId(), e);
                 }
             }
         }

@@ -226,7 +226,7 @@ public class SearchServiceImpl implements SearchService {
 
             List<String> postIds = getPostsByHashtag(cleanTag);
 
-            if (postIds.isEmpty()) {
+            if (postIds == null || postIds.isEmpty()) {
                 return Collections.emptyList();
             }
 

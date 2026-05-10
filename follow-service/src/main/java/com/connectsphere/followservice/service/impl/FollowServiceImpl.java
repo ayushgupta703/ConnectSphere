@@ -1,9 +1,10 @@
 package com.connectsphere.followservice.service.impl;
 
-import com.connectsphere.followservice.client.NotificationClient;
 import com.connectsphere.followservice.dto.*;
 import com.connectsphere.followservice.entity.Follow;
+import com.connectsphere.followservice.event.FollowNotificationEvent;
 import com.connectsphere.followservice.exception.BadRequestException;
+import com.connectsphere.followservice.producer.NotificationEventProducer;
 import com.connectsphere.followservice.repository.FollowRepository;
 import com.connectsphere.followservice.service.FollowService;
 import com.connectsphere.followservice.util.SecurityUtils;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 public class FollowServiceImpl implements FollowService {
 
     private final FollowRepository repository;
-    private final NotificationClient notificationClient;
+    private final NotificationEventProducer notificationEventProducer;
 
     @Override
     public FollowResponseDto followUser(UUID targetUserId, String token) {
@@ -53,14 +54,13 @@ public class FollowServiceImpl implements FollowService {
 
         // 🔥 SEND NOTIFICATION (non-blocking — notification-service failures must not break the follow action)
         try {
-            notificationClient.sendNotification(
-                    com.connectsphere.followservice.dto.NotificationRequest.builder()
+            notificationEventProducer.publishNotificationEvent(
+                    FollowNotificationEvent.builder()
                             .recipientId(targetUserId.toString())
                             .actorId(currentUserId.toString())
                             .type("FOLLOW")
                             .targetId(targetUserId.toString())
-                            .build(),
-                    token
+                            .build()
             );
         } catch (Exception e) {
             log.error("Notification delivery failed for FOLLOW event: followerId={}, targetId={} — {}",

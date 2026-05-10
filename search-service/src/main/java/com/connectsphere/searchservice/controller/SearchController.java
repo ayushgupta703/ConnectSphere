@@ -1,9 +1,7 @@
 package com.connectsphere.searchservice.controller;
 
-import com.connectsphere.searchservice.dto.IndexRequestDTO;
 import com.connectsphere.searchservice.dto.UserSearchResponse;
 import com.connectsphere.searchservice.service.SearchService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,15 +14,6 @@ import java.util.List;
 public class SearchController {
 
     private final SearchService searchService;
-
-    // ✅ INDEX POST (Feign-friendly + clean DTO)
-    @PostMapping("/index")
-    public ResponseEntity<String> indexPost(
-            @Valid @RequestBody IndexRequestDTO request
-    ) {
-        searchService.indexPost(request.getPostId(), request.getContent());
-        return ResponseEntity.ok("Post indexed successfully");
-    }
 
     // ✅ SMART UNIFIED USER SEARCH
     @GetMapping("/users")

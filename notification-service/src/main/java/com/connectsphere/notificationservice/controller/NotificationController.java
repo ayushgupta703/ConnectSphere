@@ -1,6 +1,5 @@
 package com.connectsphere.notificationservice.controller;
 
-import com.connectsphere.notificationservice.dto.NotificationRequest;
 import com.connectsphere.notificationservice.entity.Notification;
 import com.connectsphere.notificationservice.service.NotificationService;
 import org.springframework.http.ResponseEntity;
@@ -17,13 +16,6 @@ public class NotificationController {
 
     public NotificationController(NotificationService service) {
         this.service = service;
-    }
-
-    // 🔹 Create notification (called by other services)
-    @PostMapping
-    public ResponseEntity<Void> createNotification(@RequestBody NotificationRequest request) {
-        service.createNotification(request);
-        return ResponseEntity.ok().build();
     }
 
     // 🔹 Get all notifications for logged-in user

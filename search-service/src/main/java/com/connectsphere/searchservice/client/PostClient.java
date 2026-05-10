@@ -1,12 +1,13 @@
 package com.connectsphere.searchservice.client;
 
+import com.connectsphere.searchservice.config.FeignConfig;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "post-service", url = "http://localhost:8081")
+@FeignClient(name = "post-service", url = "http://localhost:8081", configuration = FeignConfig.class)
 public interface PostClient {
 
     // ✅ Get single post by ID

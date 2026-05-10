@@ -2,9 +2,7 @@ package com.connectsphere.postservice.service.impl;
 
 import com.connectsphere.postservice.client.FollowClient;
 import com.connectsphere.postservice.client.LikeClient;
-import com.connectsphere.postservice.client.SearchClient;
 import com.connectsphere.postservice.dto.request.CreatePostRequest;
-import com.connectsphere.postservice.dto.request.IndexRequestDTO;
 import com.connectsphere.postservice.dto.request.UpdatePostRequest;
 import com.connectsphere.postservice.dto.response.PostResponse;
 import com.connectsphere.postservice.entity.Post;
@@ -14,8 +12,11 @@ import com.connectsphere.postservice.exception.UnauthorizedException;
 import com.connectsphere.postservice.repository.PostRepository;
 import com.connectsphere.postservice.service.PostService;
 import com.connectsphere.postservice.service.UserValidationHelper;
+import com.connectsphere.postservice.event.PostIndexEvent;
+import com.connectsphere.postservice.config.RabbitMqConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
@@ -30,8 +31,8 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final FollowClient followClient;
     private final LikeClient likeClient;
-    private final SearchClient searchClient;
     private final UserValidationHelper userValidationHelper;
+    private final RabbitTemplate rabbitTemplate;
 
     // =========================
     // 🔹 Create Post
@@ -46,16 +47,7 @@ public class PostServiceImpl implements PostService {
 
         Post savedPost = postRepository.save(post);
         log.info("Post created: id={} by userId={}", savedPost.getId(), userId);
-
-        try {
-            IndexRequestDTO indexRequest = IndexRequestDTO.builder()
-                    .postId(savedPost.getId().toString())
-                    .content(savedPost.getContent())
-                    .build();
-            searchClient.indexPost(indexRequest);
-        } catch (Exception ex) {
-            log.error("Search indexing failed for postId={}: {}", savedPost.getId(), ex.getMessage());
-        }
+        publishPostIndexEvent(savedPost);
 
         return mapToResponse(savedPost);
     }
@@ -407,6 +399,20 @@ public class PostServiceImpl implements PostService {
     private boolean isVisible(Post post, UUID currentUserId) {
         return post.getVisibility() != PostVisibility.PRIVATE ||
                post.getUserId().equals(currentUserId);
+    }
+
+    private void publishPostIndexEvent(Post post) {
+        PostIndexEvent event = new PostIndexEvent();
+        event.setPostId(post.getId().toString());
+        event.setContent(post.getContent());
+
+        try {
+            rabbitTemplate.convertAndSend(RabbitMqConfig.EXCHANGE, RabbitMqConfig.ROUTING_KEY, event);
+            log.info("PostIndexEvent published for postId={}", post.getId());
+        }
+        catch (Exception ex) {
+            log.error("Failed to publish PostIndexEvent for postId={}: {}", post.getId(), ex);
+        }
     }
 
     // =========================

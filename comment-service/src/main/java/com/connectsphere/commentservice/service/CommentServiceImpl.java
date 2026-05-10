@@ -1,12 +1,13 @@
 package com.connectsphere.commentservice.service;
 
-import com.connectsphere.commentservice.client.NotificationClient;
 import com.connectsphere.commentservice.client.PostClient;
 import com.connectsphere.commentservice.dto.CommentResponseDto;
 import com.connectsphere.commentservice.entity.Comment;
+import com.connectsphere.commentservice.event.CommentNotificationEvent;
 import com.connectsphere.commentservice.exception.BadRequestException;
 import com.connectsphere.commentservice.exception.ResourceNotFoundException;
 import com.connectsphere.commentservice.exception.UnauthorizedException;
+import com.connectsphere.commentservice.producer.NotificationEventProducer;
 import com.connectsphere.commentservice.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,7 +24,7 @@ public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
     private final PostClient postClient;
-    private final NotificationClient notificationClient;
+    private final NotificationEventProducer notificationEventProducer;
 
     // ✅ ADD COMMENT
     @Override
@@ -67,16 +68,19 @@ public class CommentServiceImpl implements CommentService {
             UUID postOwnerId = postClient.getPostOwner(postId, token);
 
             if (!postOwnerId.equals(userId)) {
-
-                notificationClient.sendNotification(
-                        com.connectsphere.commentservice.dto.NotificationRequest.builder()
-                                .recipientId(postOwnerId.toString())
-                                .actorId(userId.toString())
-                                .type("COMMENT")
-                                .targetId(postId.toString())
-                                .build(),
-                        token
-                );
+                try {
+                    notificationEventProducer.publishNotificationEvent(
+                            CommentNotificationEvent.builder()
+                                    .recipientId(postOwnerId.toString())
+                                    .actorId(userId.toString())
+                                    .type("COMMENT")
+                                    .targetId(postId.toString())
+                                    .build()
+                    );
+                } catch (Exception e) {
+                    // Log and continue to not break the transaction
+                    System.err.println("Failed to publish comment notification event: " + e.getMessage());
+                }
             }
 
         } else {
@@ -85,16 +89,18 @@ public class CommentServiceImpl implements CommentService {
             UUID commentOwnerId = parent.getUserId();
 
             if (!commentOwnerId.equals(userId)) {
-
-                notificationClient.sendNotification(
-                        com.connectsphere.commentservice.dto.NotificationRequest.builder()
-                                .recipientId(commentOwnerId.toString())
-                                .actorId(userId.toString())
-                                .type("REPLY")
-                                .targetId(parentCommentId.toString())
-                                .build(),
-                        token
-                );
+                try {
+                    notificationEventProducer.publishNotificationEvent(
+                            CommentNotificationEvent.builder()
+                                    .recipientId(commentOwnerId.toString())
+                                    .actorId(userId.toString())
+                                    .type("REPLY")
+                                    .targetId(parentCommentId.toString())
+                                    .build()
+                    );
+                } catch (Exception e) {
+                    System.err.println("Failed to publish reply notification event: " + e.getMessage());
+                }
             }
         }
 
