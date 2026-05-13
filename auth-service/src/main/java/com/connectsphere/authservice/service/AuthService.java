@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
@@ -178,6 +179,17 @@ public class AuthService {
                 .filter(user -> Boolean.TRUE.equals(user.getIsDeleted()))
                 .map(User::getId)
                 .collect(Collectors.toSet());
+    }
+
+    public java.util.List<UserResponse> getRecommendedUsers(UUID currentUserId, List<UUID> excludeIds, int limit) {
+        return userRepository.findAll().stream()
+                .filter(user -> !user.getId().equals(currentUserId))
+                .filter(user -> excludeIds == null || !excludeIds.contains(user.getId()))
+                .filter(user -> !Boolean.TRUE.equals(user.getIsDeleted()))
+                .filter(user -> user.getStatus() == UserStatus.ACTIVE)
+                .limit(limit)
+                .map(this::mapToUserResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional

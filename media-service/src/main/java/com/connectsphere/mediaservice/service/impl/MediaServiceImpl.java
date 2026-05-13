@@ -33,8 +33,7 @@ public class MediaServiceImpl implements MediaService {
     private final FileUtil fileUtil;
 
     private static final String BASE_URL = "http://localhost:8087/uploads/";
-    private static final long MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50MB
-    private static final long MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200MB
+
 
     @Override
     @Transactional
@@ -233,25 +232,25 @@ public class MediaServiceImpl implements MediaService {
         if (contentType == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file type");
         }
-        
-        MediaType type = determineMediaType(file);
-        long size = file.getSize();
-        
-        if (type == MediaType.IMAGE && size > MAX_IMAGE_SIZE) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Image size exceeds 5MB limit");
-        }
-        
-        if (type == MediaType.VIDEO && size > MAX_VIDEO_SIZE) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video size exceeds 20MB limit");
+
+        if (!(contentType.startsWith("image/") || contentType.startsWith("video/"))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only IMAGE and VIDEO files are allowed");
         }
 
-        if (!(contentType.startsWith("image/") || contentType.equals("video/mp4"))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only IMAGE (jpg, png, webp) and VIDEO (mp4) are allowed");
-        }
-        
-        if (contentType.startsWith("image/") && 
+        if (contentType.startsWith("image/") &&
             !(contentType.endsWith("jpeg") || contentType.endsWith("png") || contentType.endsWith("webp"))) {
-             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only jpg, png, webp images are allowed");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only jpg, png, webp images are allowed");
+        }
+
+        if (contentType.startsWith("video/")) {
+            List<String> allowedVideoTypes = List.of(
+                    "video/mp4", "video/webm", "video/x-matroska",
+                    "video/quicktime", "video/x-msvideo", "video/mpeg", "video/ogg"
+            );
+            if (!allowedVideoTypes.contains(contentType)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Supported video formats: mp4, webm, mkv, mov, avi, mpeg, ogg");
+            }
         }
     }
 

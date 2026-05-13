@@ -89,6 +89,16 @@ public class AuthController {
         return ResponseEntity.ok(authService.searchUsersByUsernamePrefix(value));
     }
 
+    @GetMapping("/users/suggestions")
+    public ResponseEntity<java.util.List<UserResponse>> getSuggestions(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) java.util.List<UUID> excludeIds,
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        UserResponse me = authService.getCurrentUser(userDetails.getUsername());
+        return ResponseEntity.ok(authService.getRecommendedUsers(me.id(), excludeIds, limit));
+    }
+
     @DeleteMapping("/me")
     public ResponseEntity<Void> deactivateAccount(@AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
