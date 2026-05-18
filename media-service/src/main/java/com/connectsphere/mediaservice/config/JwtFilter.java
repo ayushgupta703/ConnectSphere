@@ -23,14 +23,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
+            HttpServletResponse response,
+            FilterChain filterChain)
             throws ServletException, IOException {
 
         String path = request.getRequestURI();
 
-// 🔥 Skip JWT filter for static media
-        if (path.startsWith("/uploads/")) {
+        // 🔥 Skip JWT filter for static media
+        if (path.startsWith("/api/v1/media/uploads/")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -50,12 +50,10 @@ public class JwtFilter extends OncePerRequestFilter {
 
                     request.setAttribute("userId", userId);
 
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userId,
-                                    null,
-                                    List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                            );
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userId,
+                            null,
+                            List.of(new SimpleGrantedAuthority("ROLE_" + role)));
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     System.out.println("✅ Auth set: " + SecurityContextHolder.getContext().getAuthentication());

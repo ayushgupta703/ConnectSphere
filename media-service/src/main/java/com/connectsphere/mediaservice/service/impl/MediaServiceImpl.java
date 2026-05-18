@@ -32,8 +32,7 @@ public class MediaServiceImpl implements MediaService {
     private final StoryViewRepository storyViewRepository;
     private final FileUtil fileUtil;
 
-    private static final String BASE_URL = "http://localhost:8087/uploads/";
-
+    private static final String BASE_URL = "http://localhost:8088/api/v1/media/uploads/";
 
     @Override
     @Transactional
@@ -70,7 +69,7 @@ public class MediaServiceImpl implements MediaService {
             if (determineMediaType(file) != MediaType.IMAGE) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile picture must be an image");
             }
-            
+
             String filename = fileUtil.save(file);
             String url = BASE_URL + filename;
 
@@ -100,12 +99,13 @@ public class MediaServiceImpl implements MediaService {
     @Override
     public Media getMediaById(UUID mediaId) {
         Media media = mediaRepository.findById(mediaId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media not found with id: " + mediaId));
-        
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media not found with id: " + mediaId));
+
         if (media.isDeleted()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Media is deleted");
         }
-        
+
         return media;
     }
 
@@ -113,7 +113,8 @@ public class MediaServiceImpl implements MediaService {
     @Transactional
     public void deleteMedia(UUID mediaId) {
         Media media = mediaRepository.findById(mediaId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media not found with id: " + mediaId));
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media not found with id: " + mediaId));
         media.setDeleted(true);
         mediaRepository.save(media);
     }
@@ -172,7 +173,8 @@ public class MediaServiceImpl implements MediaService {
     @Transactional
     public void viewStory(UUID storyId, UUID viewerId) {
         Story story = storyRepository.findById(storyId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Story not found with id: " + storyId));
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Story not found with id: " + storyId));
 
         // 🚫 1. Prevent self-view
         if (story.getAuthorId().equals(viewerId)) {
@@ -206,7 +208,8 @@ public class MediaServiceImpl implements MediaService {
     @Transactional
     public void deleteStory(UUID storyId, UUID authorId) {
         Story story = storyRepository.findById(storyId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Story not found with id: " + storyId));
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Story not found with id: " + storyId));
 
         if (!story.getAuthorId().equals(authorId)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not authorized to delete this story");
@@ -216,7 +219,6 @@ public class MediaServiceImpl implements MediaService {
         storyRepository.save(story);
         log.info("Story {} deleted by author {}", storyId, authorId);
     }
-
 
     @Override
     @Transactional
@@ -238,15 +240,14 @@ public class MediaServiceImpl implements MediaService {
         }
 
         if (contentType.startsWith("image/") &&
-            !(contentType.endsWith("jpeg") || contentType.endsWith("png") || contentType.endsWith("webp"))) {
+                !(contentType.endsWith("jpeg") || contentType.endsWith("png") || contentType.endsWith("webp"))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only jpg, png, webp images are allowed");
         }
 
         if (contentType.startsWith("video/")) {
             List<String> allowedVideoTypes = List.of(
                     "video/mp4", "video/webm", "video/x-matroska",
-                    "video/quicktime", "video/x-msvideo", "video/mpeg", "video/ogg"
-            );
+                    "video/quicktime", "video/x-msvideo", "video/mpeg", "video/ogg");
             if (!allowedVideoTypes.contains(contentType)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Supported video formats: mp4, webm, mkv, mov, avi, mpeg, ogg");

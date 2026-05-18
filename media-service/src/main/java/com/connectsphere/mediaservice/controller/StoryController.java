@@ -23,8 +23,7 @@ public class StoryController {
     public ResponseEntity<StoryResponse> createStory(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "caption", required = false) String caption,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
         String userIdStr = (String) request.getAttribute("userId");
 
         if (userIdStr == null) {
@@ -51,8 +50,7 @@ public class StoryController {
     @PostMapping("/{storyId}/view")
     public ResponseEntity<Void> viewStory(
             @PathVariable java.util.UUID storyId,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
         String userIdStr = (String) request.getAttribute("userId");
         if (userIdStr == null) {
             throw new RuntimeException("User Not Authenticated");
@@ -66,8 +64,7 @@ public class StoryController {
     @DeleteMapping("/{storyId}")
     public ResponseEntity<Void> deleteStory(
             @PathVariable java.util.UUID storyId,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
         String userIdStr = (String) request.getAttribute("userId");
         if (userIdStr == null) {
             throw new RuntimeException("User Not Authenticated");

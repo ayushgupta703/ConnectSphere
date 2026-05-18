@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/reactions")
+@RequestMapping("/api/v1/likes/reactions")
 @RequiredArgsConstructor
 public class LikeController {
 
@@ -50,7 +50,7 @@ public class LikeController {
     @GetMapping("/{postId}/has-reacted")
     public ResponseEntity<Boolean> hasReacted(
             @PathVariable UUID postId,
-            @RequestParam UUID userId
+            @RequestAttribute("userId") UUID userId
     ) {
         return ResponseEntity.ok(likeService.hasReacted(postId, userId));
     }
